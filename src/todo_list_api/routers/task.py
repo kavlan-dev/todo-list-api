@@ -8,7 +8,7 @@ from todo_list_api.models.task import TaskCreate, TaskResponse, TaskUpdate
 from todo_list_api.services.task import TaskService
 from todo_list_api.utils.security import JWTAuth, auth_scheme
 
-router = APIRouter(prefix="/api/tasks")
+router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
 
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_200_OK)

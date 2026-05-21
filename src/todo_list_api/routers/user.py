@@ -6,8 +6,7 @@ from todo_list_api.models.user import UserCreate, UserLogin, UserResponse
 from todo_list_api.services.user import UserService
 from todo_list_api.utils.security import JWTAuth
 
-
-router = APIRouter(prefix="/api/users")
+router = APIRouter(prefix="/api/users", tags=["users"])
 
 
 @router.post(

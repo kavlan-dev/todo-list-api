@@ -9,7 +9,14 @@ class TaskService:
         self._repo = repo
 
     def create_task(self, new_task: TaskCreate, user_id: int) -> Task:
-        return self._repo.create(new_task, user_id)
+        task = Task(
+            id=None,
+            created_at=None,
+            updated_at=None,
+            user_id=user_id,
+            **new_task.model_dump(),
+        )
+        return self._repo.create(task)
 
     def get_all_tasks(self, user_id: int) -> List[Task]:
         tasks = self._repo.get_all()
@@ -29,7 +36,14 @@ class TaskService:
     ) -> Optional[Task]:
         task = self._repo.get_by_id(task_id)
         if task and int(str(task.user_id)) == user_id:
-            return self._repo.update(task_id, task_update)
+            task = Task(
+                id=None,
+                created_at=None,
+                updated_at=None,
+                user_id=user_id,
+                **task_update.model_dump(),
+            )
+            return self._repo.update(task_id, task)
 
     def delete_task(self, task_id: int, user_id: int) -> bool:
         task = self._repo.get_by_id(task_id)

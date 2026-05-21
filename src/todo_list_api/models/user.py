@@ -1,24 +1,9 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import DeclarativeBase, relationship
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    tasks = relationship("Task", back_populates="owner", cascade="all, delete-orphan")
 
 
 class UserCreate(BaseModel):
@@ -47,3 +32,30 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class User(BaseModel):
+    id: Optional[int]
+    username: str
+    email: str
+    password_hash: str
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class UserModel(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    tasks = relationship(
+        "TaskModel", back_populates="owner", cascade="all, delete-orphan"
+    )
