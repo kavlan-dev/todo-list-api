@@ -12,6 +12,7 @@ class DBConfig:
 @dataclass
 class Config:
     env: str
+    jwt_secret_key: str
     db_cfg: DBConfig
 
     def get_db_addr(self):

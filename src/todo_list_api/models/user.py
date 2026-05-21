@@ -13,7 +13,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.now)
@@ -22,7 +22,7 @@ class User(Base):
 
 
 class UserCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=100, description="Имя пользователя")
+    username: str = Field(min_length=1, max_length=100, description="Имя пользователя")
     email: EmailStr = Field(description="Email пользователя")
     password: str = Field(
         min_length=8, max_length=100, description="Пароль пользователя"
@@ -30,7 +30,7 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: EmailStr = Field(description="Email пользователя")
+    username: str = Field(min_length=1, max_length=100, description="Имя пользователя")
     password: str = Field(
         min_length=8, max_length=100, description="Пароль пользователя"
     )
@@ -38,7 +38,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     id: int = Field(description="Уникальный идентификатор пользователя")
-    name: str = Field(min_length=1, max_length=100, description="Имя пользователя")
+    username: str = Field(min_length=1, max_length=100, description="Имя пользователя")
     email: EmailStr = Field(description="Email пользователя")
     created_at: datetime = Field(description="Дата и время создания пользователя")
     updated_at: datetime = Field(
