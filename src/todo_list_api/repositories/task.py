@@ -63,7 +63,8 @@ class InMemoryTaskRepository(ITaskRepository):
     def update(self, user_id: int, task_id: int, task_update: Task) -> Optional[Task]:
         task = self.get_by_id(user_id, task_id)
         if task:
-            for key, value in vars(task_update).items():
+            update_data = task_update.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
                 if value is not None:
                     setattr(task, key, value)
             task.updated_at = datetime.now()
@@ -94,6 +95,7 @@ class PostgreSQLTaskRepository(ITaskRepository):
         task_models = (
             self._session.query(TaskModel)
             .filter(TaskModel.user_id == user_id)
+            .order_by(TaskModel.created_at.desc())
             .offset(page)
             .limit(limit)
             .all()
