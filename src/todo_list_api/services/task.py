@@ -18,8 +18,8 @@ class TaskService:
         )
         return self._repo.create(user_id, task)
 
-    def get_all_tasks(self, user_id: int) -> List[Task]:
-        return self._repo.get_all(user_id=user_id)
+    def get_all_tasks(self, user_id: int, page: int, limit: int) -> List[Task]:
+        return self._repo.get_all(user_id, page, limit)
 
     def get_task_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
         return self._repo.get_by_id(user_id, task_id)

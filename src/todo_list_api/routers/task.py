@@ -30,12 +30,14 @@ def create_task(
 
 @router.get("/", response_model=List[TaskResponse], status_code=status.HTTP_200_OK)
 def get_tasks(
+    page: int = 0,
+    limit: int = 100,
     service: TaskService = Depends(get_task_service),
     token: HTTPAuthorizationCredentials = Depends(auth_scheme),
     jwt_auth: JWTAuth = Depends(get_jwt_auth),
 ):
     user_id = int(jwt_auth.get_user_from_token(token)["user_id"])
-    task = service.get_all_tasks(user_id)
+    task = service.get_all_tasks(user_id, page, limit)
     if task:
         return task
     return JSONResponse({"message": "нет задач"}, status_code=status.HTTP_200_OK)

@@ -12,7 +12,7 @@ class ITaskRepository(ABC):
         pass
 
     @abstractmethod
-    def get_all(self, user_id: int) -> List[Task]:
+    def get_all(self, user_id: int, page: int, limit: int) -> List[Task]:
         pass
 
     @abstractmethod
@@ -50,8 +50,10 @@ class InMemoryTaskRepository(ITaskRepository):
         self._tasks[tid] = new_task
         return new_task
 
-    def get_all(self, user_id: int) -> List[Task]:
-        return [task for task in self._tasks.values() if task.user_id == user_id]
+    def get_all(self, user_id: int, page: int, limit: int) -> List[Task]:
+        user_tasks = [task for task in self._tasks.values() if task.user_id == user_id]
+        end_idx = page + limit
+        return user_tasks[page:end_idx]
 
     def get_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
         task = self._tasks.get(task_id, None)
@@ -88,9 +90,13 @@ class PostgreSQLTaskRepository(ITaskRepository):
 
         return Task.model_validate(vars(task_model))
 
-    def get_all(self, user_id: int) -> List[Task]:
+    def get_all(self, user_id: int, page: int, limit: int) -> List[Task]:
         task_models = (
-            self._session.query(TaskModel).filter(TaskModel.user_id == user_id).all()
+            self._session.query(TaskModel)
+            .filter(TaskModel.user_id == user_id)
+            .offset(page)
+            .limit(limit)
+            .all()
         )
         return [Task.model_validate(vars(task_model)) for task_model in task_models]
 
