@@ -27,4 +27,3 @@ class UserService:
             user_login.password, user.password_hash
         ):
             return user
-        return

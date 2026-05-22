@@ -26,7 +26,22 @@ class InMemoryUserRepository(IUserRepository):
 
         return max(i for i in self._users) + 1
 
+    def _get_by_email(self, email: str) -> Optional[User]:
+        for user in self._users.values():
+            if user.email == email:
+                return user
+
     def create(self, new_user: User) -> User:
+        existing_user_by_username = self.get_by_username(new_user.username)
+        if existing_user_by_username:
+            raise ValueError(
+                f"Пользователь с именем '{new_user.username}' уже существует"
+            )
+
+        existing_user_by_email = self._get_by_email(new_user.email)
+        if existing_user_by_email:
+            raise ValueError(f"Пользователь с email '{new_user.email}' уже существует")
+
         uid = self._generate_id()
         now = datetime.now()
 

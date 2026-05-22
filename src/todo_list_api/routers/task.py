@@ -19,7 +19,7 @@ def create_task(
     jwt_auth: JWTAuth = Depends(get_jwt_auth),
 ):
     user_id = int(jwt_auth.get_user_from_token(token)["user_id"])
-    task = service.create_task(new_task, user_id)
+    task = service.create_task(user_id, new_task)
     if task:
         return task
     return JSONResponse(
@@ -49,7 +49,7 @@ def get_task_by_id(
     jwt_auth: JWTAuth = Depends(get_jwt_auth),
 ):
     user_id = int(jwt_auth.get_user_from_token(token)["user_id"])
-    task = service.get_task_by_id(id, user_id)
+    task = service.get_task_by_id(user_id, id)
     if task:
         return task
     return JSONResponse(
@@ -66,7 +66,7 @@ def update_task(
     jwt_auth: JWTAuth = Depends(get_jwt_auth),
 ):
     user_id = int(jwt_auth.get_user_from_token(token)["user_id"])
-    task = service.update_task(id, task_update, user_id)
+    task = service.update_task(user_id, id, task_update)
     if task:
         return task
     return JSONResponse(
@@ -82,9 +82,8 @@ def delete_task(
     jwt_auth: JWTAuth = Depends(get_jwt_auth),
 ):
     user_id = int(jwt_auth.get_user_from_token(token)["user_id"])
-    ok = service.delete_task(id, user_id)
-    if ok:
-        return
-    return JSONResponse(
-        {"message": "задача не найдена"}, status_code=status.HTTP_404_NOT_FOUND
-    )
+    ok = service.delete_task(user_id, id)
+    if not ok:
+        return JSONResponse(
+            {"message": "задача не найдена"}, status_code=status.HTTP_404_NOT_FOUND
+        )

@@ -8,45 +8,33 @@ class TaskService:
     def __init__(self, repo: ITaskRepository) -> None:
         self._repo = repo
 
-    def create_task(self, new_task: TaskCreate, user_id: int) -> Task:
+    def create_task(self, user_id: int, new_task: TaskCreate) -> Task:
         task = Task(
             id=None,
             created_at=None,
             updated_at=None,
-            user_id=user_id,
+            user_id=None,
             **new_task.model_dump(),
         )
-        return self._repo.create(task)
+        return self._repo.create(user_id, task)
 
     def get_all_tasks(self, user_id: int) -> List[Task]:
-        tasks = self._repo.get_all()
-        user_tasks = []
-        for task in tasks:
-            if task and int(str(task.user_id)) == user_id:
-                user_tasks.append(task)
-        return user_tasks
+        return self._repo.get_all(user_id=user_id)
 
-    def get_task_by_id(self, task_id: int, user_id: int) -> Optional[Task]:
-        task = self._repo.get_by_id(task_id)
-        if task and int(str(task.user_id)) == user_id:
-            return task
+    def get_task_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
+        return self._repo.get_by_id(user_id, task_id)
 
     def update_task(
-        self, task_id: int, task_update: TaskUpdate, user_id: int
+        self, user_id: int, task_id: int, task_update: TaskUpdate
     ) -> Optional[Task]:
-        task = self._repo.get_by_id(task_id)
-        if task and int(str(task.user_id)) == user_id:
-            task = Task(
-                id=None,
-                created_at=None,
-                updated_at=None,
-                user_id=user_id,
-                **task_update.model_dump(),
-            )
-            return self._repo.update(task_id, task)
+        task = Task(
+            id=None,
+            created_at=None,
+            updated_at=None,
+            user_id=None,
+            **task_update.model_dump(),
+        )
+        return self._repo.update(user_id, task_id, task)
 
-    def delete_task(self, task_id: int, user_id: int) -> bool:
-        task = self._repo.get_by_id(task_id)
-        if task and int(str(task.user_id)) == user_id:
-            return self._repo.delete(task_id)
-        return False
+    def delete_task(self, user_id: int, task_id: int) -> bool:
+        return self._repo.delete(user_id, task_id)

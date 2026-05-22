@@ -8,23 +8,23 @@ from todo_list_api.models.task import Task, TaskModel
 
 class ITaskRepository(ABC):
     @abstractmethod
-    def create(self, new_task: Task) -> Task:
+    def create(self, user_id: int, new_task: Task) -> Task:
         pass
 
     @abstractmethod
-    def get_all(self) -> List[Task]:
+    def get_all(self, user_id: int) -> List[Task]:
         pass
 
     @abstractmethod
-    def get_by_id(self, id: int) -> Optional[Task]:
+    def get_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
         pass
 
     @abstractmethod
-    def update(self, id: int, task_update: Task) -> Optional[Task]:
+    def update(self, user_id: int, task_id: int, task_update: Task) -> Optional[Task]:
         pass
 
     @abstractmethod
-    def delete(self, id: int) -> bool:
+    def delete(self, user_id: int, task_id: int) -> bool:
         pass
 
 
@@ -38,25 +38,28 @@ class InMemoryTaskRepository(ITaskRepository):
 
         return max(i for i in self._tasks) + 1
 
-    def create(self, new_task: Task) -> Task:
+    def create(self, user_id: int, new_task: Task) -> Task:
         tid = self._generate_id()
         now = datetime.now()
 
         new_task.id = tid
+        new_task.user_id = user_id
         new_task.created_at = now
         new_task.updated_at = now
 
         self._tasks[tid] = new_task
         return new_task
 
-    def get_all(self) -> List[Task]:
-        return list(self._tasks.values())
+    def get_all(self, user_id: int) -> List[Task]:
+        return [task for task in self._tasks.values() if task.user_id == user_id]
 
-    def get_by_id(self, id: int) -> Optional[Task]:
-        return self._tasks.get(id, None)
+    def get_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
+        task = self._tasks.get(task_id, None)
+        if task and task.user_id == user_id:
+            return task
 
-    def update(self, id: int, task_update: Task) -> Optional[Task]:
-        task = self.get_by_id(id)
+    def update(self, user_id: int, task_id: int, task_update: Task) -> Optional[Task]:
+        task = self.get_by_id(user_id, task_id)
         if task:
             for key, value in vars(task_update).items():
                 if value is not None:
@@ -64,44 +67,64 @@ class InMemoryTaskRepository(ITaskRepository):
             task.updated_at = datetime.now()
             return task
 
-    def delete(self, id: int) -> bool:
-        return True if self._tasks.pop(id, None) else False
+    def delete(self, user_id: int, task_id: int) -> bool:
+        task = self.get_by_id(user_id, task_id)
+        if task:
+            return True if self._tasks.pop(task_id, None) else False
+        return False
 
 
 class PostgreSQLTaskRepository(ITaskRepository):
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def create(self, new_task: Task) -> Task:
+    def create(self, user_id: int, new_task: Task) -> Task:
+        new_task.user_id = user_id
         task_model = TaskModel(**new_task.model_dump())
+
         self._session.add(task_model)
         self._session.commit()
         self._session.refresh(task_model)
+
         return Task.model_validate(vars(task_model))
 
-    def get_all(self) -> List[Task]:
-        task_models = self._session.query(TaskModel).all()
+    def get_all(self, user_id: int) -> List[Task]:
+        task_models = (
+            self._session.query(TaskModel).filter(TaskModel.user_id == user_id).all()
+        )
         return [Task.model_validate(vars(task_model)) for task_model in task_models]
 
-    def get_by_id(self, id: int) -> Optional[Task]:
-        task_model = self._session.query(TaskModel).filter(TaskModel.id == id).first()
+    def get_by_id(self, user_id: int, task_id: int) -> Optional[Task]:
+        task_model = (
+            self._session.query(TaskModel)
+            .filter(TaskModel.id == task_id, TaskModel.user_id == user_id)
+            .first()
+        )
         if task_model:
             return Task.model_validate(vars(task_model))
-        return None
 
-    def update(self, id: int, task_update: Task) -> Optional[Task]:
-        task_model = self._session.query(TaskModel).filter(TaskModel.id == id).first()
+    def update(self, user_id: int, task_id: int, task_update: Task) -> Optional[Task]:
+        task_model = (
+            self._session.query(TaskModel)
+            .filter(TaskModel.id == task_id, TaskModel.user_id == user_id)
+            .first()
+        )
         if task_model:
             update_data = task_update.model_dump(exclude_unset=True)
             for key, value in update_data.items():
-                setattr(task_model, key, value)
+                if value is not None:
+                    setattr(task_model, key, value)
             self._session.commit()
             self._session.refresh(task_model)
             return Task.model_validate(vars(task_model))
         return None
 
-    def delete(self, id: int) -> bool:
-        task_model = self._session.query(TaskModel).filter(TaskModel.id == id).first()
+    def delete(self, user_id: int, task_id: int) -> bool:
+        task_model = (
+            self._session.query(TaskModel)
+            .filter(TaskModel.id == task_id, TaskModel.user_id == user_id)
+            .first()
+        )
         if task_model:
             self._session.delete(task_model)
             self._session.commit()
